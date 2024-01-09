@@ -188,11 +188,55 @@ class CarController {
       res.status(201).json({
         status: true,
         message: `Succesfully update car with id ${id}`,
-        statusCode: "OK"
+        statusCode: "OK",
       });
     } catch (error) {
       t.rollback();
       console.log(error);
+      next(error);
+    }
+  }
+
+  static async changeStatusCar(req, res, next) {
+    const t = await sequelize.transaction();
+    try {
+      const { id } = req.params;
+
+      const verifyCar = await Car.findByPk(id);
+      if (!verifyCar) {
+        throw {
+          name: "NotFound",
+          errors: [
+            {
+              message: `Car with id ${id} not found`,
+            },
+          ],
+        };
+      }
+
+      if (verifyCar.status) {
+        await Car.update({ where: { id }, transaction: t }, { status: false });
+      } else {
+        await Car.update({ where: { id }, transaction: t }, { status: true });
+      }
+
+      await History.create(
+        {
+          name: verifyCar.title,
+          updatedBy: req.user.name,
+          description: `Statu ${verifyCar.title} has been changed`,
+        },
+        { transaction: t }
+      );
+
+      t.commit();
+      res.status(201).json({
+        status: true,
+        message: `Succesfully update car's status with id ${id}`,
+        statusCode: "OK",
+      });
+    } catch (error) {
+      t.rollback();
       next(error);
     }
   }

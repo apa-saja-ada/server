@@ -11,6 +11,11 @@ router.post("/login", UserController.login);
 
 router.use(auth);
 
+// * History
+const HistoryController = require("../controllers/history");
+
+router.get("/history", HistoryController.getHistoryList);
+
 // * Car
 const CarController = require("../controllers/car");
 
@@ -23,10 +28,6 @@ router.put(
   uploadFile("public/uploads/cars"),
   CarController.editCar
 );
-
-// * History
-const HistoryController = require('../controllers/history')
-
-router.get('/history', HistoryController.getHistoryList)
+router.patch("/car/:id", authorize, CarController.changeStatusCar);
 
 module.exports = router;

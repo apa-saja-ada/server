@@ -24,6 +24,18 @@ class UserController {
     try {
       const { email, password } = req.body;
 
+      if(!email || !password) {
+        throw {
+          name: "BadRequest",
+          errors: [
+            {
+              message: "Please insert email/password",
+            },
+          ],
+        };
+      }
+
+      console.log('cek email>>', email);
       const verifyUser = await User.findOne({ where: { email } });
    
       if (!verifyUser || !bcrypt.compareSync(password, verifyUser.password)) {
@@ -45,6 +57,7 @@ class UserController {
         response: access_token,
       });
     } catch (error) {
+      console.log('ini error>>',error);
       next(error);
     }
   }
