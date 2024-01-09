@@ -1,5 +1,6 @@
 const { unlink } = require("fs");
 const { Car, History, sequelize } = require("../models");
+const { json } = require("sequelize");
 
 class CarController {
   static async createCar(req, res, next) {
@@ -237,6 +238,84 @@ class CarController {
       });
     } catch (error) {
       t.rollback();
+      next(error);
+    }
+  }
+
+  static async changeSoldCar(req, res, next) {
+    const t = await sequelize.transaction();
+    try {
+      const { id } = req.params;
+
+      const verifyCar = await Car.findByPk(id);
+      if (!verifyCar) {
+        throw {
+          name: "NotFound",
+          errors: [
+            {
+              message: `Car with id ${id} not found`,
+            },
+          ],
+        };
+      }
+
+      if (verifyCar.sold) {
+        await Car.update({ where: { id }, transaction: t }, { sold: false });
+        await History.create(
+          {
+            name: verifyCar.title,
+            updatedBy: req.user.name,
+            description: `${verifyCar.title} already sold`,
+          },
+          { transaction: t }
+        );
+      } else {
+        await Car.update({ where: { id }, transaction: t }, { sold: false });
+        await History.create(
+          {
+            name: verifyCar.title,
+            updatedBy: req.user.name,
+            description: `${verifyCar.title} back on list`,
+          },
+          { transaction: t }
+        );
+      }
+      t.commit();
+
+      res.status(201).json({
+        status: true,
+        message: `Succesfully update car's sold status with id ${id}`,
+        statusCode: "OK",
+      });
+    } catch (error) {
+      t.rollback();
+      next(error);
+    }
+  }
+
+  static async getSoldCar(req, res, next) {
+    try {
+      const result = await Car.findMany({ where: { sold: true } });
+
+      const transformResult = result.map((data, index) => {
+        const { ...body } = data;
+        const photoData = JSON.parse(data.photo);
+        return {
+          no: index + 1,
+          url_photo: photoData.map((d, k) => {
+            return `${req.headers.host}/public/${d}`;
+          }),
+          ...body,
+        };
+      });
+
+      res.status(200).json({
+        status: true,
+        message: "Succesfully get all sold cars",
+        statusCode: "OK",
+        response: transformResult,
+      });
+    } catch (error) {
       next(error);
     }
   }

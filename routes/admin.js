@@ -30,4 +30,9 @@ router.put(
 );
 router.patch("/car/:id", authorize, CarController.changeStatusCar);
 
+// * Sold Car
+
+router.get('/car/sold', CarController.getSoldCar)
+router.patch('/car/sold/:id', authorize, CarController.changeSoldCar) 
+
 module.exports = router;
