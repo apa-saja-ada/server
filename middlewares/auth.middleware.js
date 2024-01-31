@@ -35,7 +35,6 @@ module.exports = async (req, res, next) => {
     };
     next()
   } catch (error) {
-    console.log("cek isi", error);
     next(error);
   }
 };

@@ -35,7 +35,6 @@ class UserController {
         };
       }
 
-      console.log('cek email>>', email);
       const verifyUser = await User.findOne({ where: { email } });
    
       if (!verifyUser || !bcrypt.compareSync(password, verifyUser.password)) {
@@ -54,6 +53,7 @@ class UserController {
         status: true,
         message: "Login has been succesfully",
         statusCode: "OK",
+        role: verifyUser.role,
         response: access_token,
       });
     } catch (error) {

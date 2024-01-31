@@ -3,7 +3,8 @@ const { History} = require('../models')
 class HistoryController {
     static async getHistoryList(req,res,next) {
         try {
-            const result = await History.findAll({raw: true})
+            const result = await History.findAll({raw: true,
+                order: [['createdAt', 'DESC']]})
             const transformResult = result.map((d,k) => {
                 const {...body} = d
                 return {
