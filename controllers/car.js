@@ -52,7 +52,7 @@ class CarController {
 
   static async getCarList(req, res, next) {
     try {
-      const result = await Car.findAll({ raw: true, where: { status: true } });
+      const result = await Car.findAll({ raw: true, where: { status: true, sold: false } });
 
       const transformResult = result.map((data, index) => {
         const { ...body } = data;
@@ -216,16 +216,16 @@ class CarController {
       }
 
       if (verifyCar.status) {
-        await Car.update({ where: { id }, transaction: t }, { status: false });
+        await Car.update({ status: false }, { where: { id }, transaction: t });
       } else {
-        await Car.update({ where: { id }, transaction: t }, { status: true });
+        await Car.update({ status: true }, { where: { id }, transaction: t });
       }
 
       await History.create(
         {
           name: verifyCar.title,
           updatedBy: req.user.name,
-          description: `Statu ${verifyCar.title} has been changed`,
+          description: `${verifyCar.title} has been deleted`,
         },
         { transaction: t }
       );
@@ -235,8 +235,10 @@ class CarController {
         status: true,
         message: `Succesfully update car's status with id ${id}`,
         statusCode: "OK",
+        response: `${verifyCar.title} has been deleted`
       });
     } catch (error) {
+      console.log(error, "<<<<");
       t.rollback();
       next(error);
     }
@@ -260,22 +262,22 @@ class CarController {
       }
 
       if (verifyCar.sold) {
-        await Car.update({ where: { id }, transaction: t }, { sold: false });
-        await History.create(
-          {
-            name: verifyCar.title,
-            updatedBy: req.user.name,
-            description: `${verifyCar.title} already sold`,
-          },
-          { transaction: t }
-        );
-      } else {
-        await Car.update({ where: { id }, transaction: t }, { sold: false });
+        await Car.update({ sold: false }, { where: { id }, transaction: t });
         await History.create(
           {
             name: verifyCar.title,
             updatedBy: req.user.name,
             description: `${verifyCar.title} back on list`,
+          },
+          { transaction: t }
+        );
+      } else {
+        await Car.update({ sold: true }, { where: { id }, transaction: t });
+        await History.create(
+          {
+            name: verifyCar.title,
+            updatedBy: req.user.name,
+            description: `${verifyCar.title} already sold`,
           },
           { transaction: t }
         );
@@ -295,7 +297,8 @@ class CarController {
 
   static async getSoldCar(req, res, next) {
     try {
-      const result = await Car.findMany({ where: { sold: true } });
+      console.log('masuk controller');
+      const result = await Car.findAll({ raw: true, where: { status: true, sold: true } });
 
       const transformResult = result.map((data, index) => {
         const { ...body } = data;
@@ -320,5 +323,7 @@ class CarController {
     }
   }
 }
+
+
 
 module.exports = CarController;
